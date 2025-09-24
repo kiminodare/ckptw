@@ -17,9 +17,13 @@ datasource db {
 model VipProof {
   id              String   @id @default(cuid())
   username        String
-  discordId       String
-  isVip           Boolean
+  discordId       String   @map("discord_id")
+  isVip           Boolean  @map("is_vip")
   proofFileVip    Bytes    @map("proof_file_vip")
   proofFileSummit Bytes    @map("proof_file_summit")
+  summitTotal     Int      @map("summit_total")
+  ipAddress       String   @map("ip_address")
   createdAt       DateTime @default(now())
+
+  @@unique([ipAddress])
 }
