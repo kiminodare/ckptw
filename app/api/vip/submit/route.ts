@@ -2,15 +2,28 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod/v3';
 
-const schema = z.object({
-    username: z.string().min(3),
-    discordId: z.string().min(3),
-    isVip: z.enum(['Ya', 'Tidak']),
-    jumlahSummit: z.coerce.number().int().min(0),
-    proofFileVip: z.instanceof(Uint8Array),
-    proofFileSummit: z.instanceof(Uint8Array),
-    ipAddress: z.string().ip()
-});
+const schema = z
+    .object({
+        username: z.string().min(3),
+        discordId: z.string().min(3),
+        isVip: z.enum(['Ya', 'Tidak']),
+        jumlahSummit: z.coerce.number().int().min(0),
+        proofFileVip: z.instanceof(Uint8Array).optional(),
+        proofFileSummit: z.instanceof(Uint8Array),
+        ipAddress: z.string().ip()
+    })
+    .refine(
+        (data) => {
+            if (data.isVip === 'Ya') {
+                return data.proofFileVip instanceof Uint8Array;
+            }
+            return true;
+        },
+        {
+            message: 'Bukti VIP wajib diupload jika memilih Ya.',
+            path: ['proofFileVip']
+        }
+    );
 
 export async function POST(req: Request) {
     try {
@@ -23,17 +36,17 @@ export async function POST(req: Request) {
         const fileVip = formData.get('proofVip');
         const fileSummit = formData.get('proofSummit');
 
-        if (!(fileVip instanceof File) || !(fileSummit instanceof File)) {
-            return NextResponse.json({ error: 'File tidak valid' }, { status: 400 });
+        if (!(fileSummit instanceof File)) {
+            return NextResponse.json({ error: 'File summit tidak valid' }, { status: 400 });
         }
 
-        const bufferVip = new Uint8Array(await fileVip.arrayBuffer());
         const bufferSummit = new Uint8Array(await fileSummit.arrayBuffer());
+        const bufferVip = fileVip instanceof File ? new Uint8Array(await fileVip.arrayBuffer()) : undefined;
 
         const ipAddress =
             req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
             req.headers.get('x-real-ip') ||
-            '::'; // Default ke IPv6 loopback, biar valid
+            '::';
 
         const parsed = schema.safeParse({
             username,
@@ -79,7 +92,7 @@ export async function POST(req: Request) {
                 username: parsed.data.username,
                 discordId: parsed.data.discordId,
                 isVip: parsed.data.isVip === 'Ya',
-                proofFileVip: parsed.data.proofFileVip,
+                proofFileVip: parsed.data.proofFileVip ?? null, // ✅ FIX DI SINI
                 proofFileSummit: parsed.data.proofFileSummit,
                 summitTotal: parsed.data.jumlahSummit,
                 ipAddress: parsed.data.ipAddress

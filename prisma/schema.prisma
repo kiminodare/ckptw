@@ -19,7 +19,7 @@ model VipProof {
   username        String
   discordId       String   @map("discord_id")
   isVip           Boolean  @map("is_vip")
-  proofFileVip    Bytes    @map("proof_file_vip")
+  proofFileVip    Bytes?   @map("proof_file_vip")
   proofFileSummit Bytes    @map("proof_file_summit")
   summitTotal     Int      @map("summit_total")
   ipAddress       String   @map("ip_address")
