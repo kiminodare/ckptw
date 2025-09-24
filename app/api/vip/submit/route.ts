@@ -9,7 +9,7 @@ const schema = z.object({
     jumlahSummit: z.coerce.number().int().min(0),
     proofFileVip: z.instanceof(Uint8Array),
     proofFileSummit: z.instanceof(Uint8Array),
-    ipAddress: z.string().ip({ version: 'v6' })
+    ipAddress: z.string().ip()
 });
 
 export async function POST(req: Request) {
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         const ipAddress =
             req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
             req.headers.get('x-real-ip') ||
-            '0.0.0.0';
+            '::'; // Default ke IPv6 loopback, biar valid
 
         const parsed = schema.safeParse({
             username,
