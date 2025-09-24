@@ -92,8 +92,8 @@ export async function POST(req: Request) {
                 username: parsed.data.username,
                 discordId: parsed.data.discordId,
                 isVip: parsed.data.isVip === 'Ya',
-                proofFileVip: parsed.data.proofFileVip ?? null, // ✅ FIX DI SINI
-                proofFileSummit: parsed.data.proofFileSummit,
+                proofFileVip: parsed.data.proofFileVip ? Buffer.from(parsed.data.proofFileVip) : null,
+                proofFileSummit: Buffer.from(parsed.data.proofFileSummit),
                 summitTotal: parsed.data.jumlahSummit,
                 ipAddress: parsed.data.ipAddress
             }

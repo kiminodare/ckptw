@@ -13,6 +13,7 @@ export default function App() {
     });
 
     const [message, setMessage] = useState('');
+    const [fieldErrors, setFieldErrors] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -27,6 +28,7 @@ export default function App() {
         e.preventDefault();
         setLoading(true);
         setMessage('');
+        setFieldErrors([]);
 
         const body = new FormData();
         body.append('username', formData.username);
@@ -49,7 +51,21 @@ export default function App() {
             });
 
             const data = await res.json();
-            setMessage(data.success ? 'Formulir berhasil dikirim!' : `Gagal: ${data.error}`);
+
+            if (res.status === 500) {
+                setMessage(`${data.error} (${data.details})`);
+                return;
+            }
+
+            if (data.success) {
+                setMessage('Formulir berhasil dikirim!');
+                setFieldErrors([]);
+            } else {
+                setMessage(data.error || 'Terjadi kesalahan');
+                if (data.issues) {
+                    setFieldErrors(data.issues.map((issue: { message: string }) => issue.message));
+                }
+            }
         } catch {
             setMessage('Terjadi kesalahan jaringan, coba lagi nanti.');
         } finally {
@@ -67,13 +83,20 @@ export default function App() {
                 {message && (
                     <div
                         className={`${
-                            message.startsWith('Gagal')
+                            message.startsWith('Gagal') || message.startsWith('Data tidak valid')
                                 ? 'bg-red-100 border-red-500 text-red-700'
                                 : 'bg-green-100 border-green-500 text-green-700'
                         } border-l-4 p-4 rounded-lg mb-4`}
                         role="alert"
                     >
-                        <p>{message}</p>
+                        <p className="font-medium">{message}</p>
+                        {fieldErrors.length > 0 && (
+                            <ul className="mt-2 list-disc list-inside text-sm">
+                                {fieldErrors.map((err, idx) => (
+                                    <li key={idx}>{err}</li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 )}
 
