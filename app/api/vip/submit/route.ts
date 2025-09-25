@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod/v3';
+import { cos, BUCKET, REGION } from '@/lib/cos';
 
 const schema = z
     .object({
@@ -10,7 +11,7 @@ const schema = z
         jumlahSummit: z.coerce.number().int().min(0),
         proofFileVip: z.instanceof(Uint8Array).optional(),
         proofFileSummit: z.instanceof(Uint8Array),
-        ipAddress: z.string().ip()
+        ipAddress: z.string().ip(),
     })
     .refine(
         (data) => {
@@ -21,9 +22,20 @@ const schema = z
         },
         {
             message: 'Bukti VIP wajib diupload jika memilih Ya.',
-            path: ['proofFileVip']
+            path: ['proofFileVip'],
         }
     );
+
+async function uploadToCOS(fileBuffer: Uint8Array, key: string): Promise<string> {
+    await cos.putObject({
+        Bucket: BUCKET,
+        Region: REGION,
+        Key: key,
+        Body: Buffer.from(fileBuffer),
+    });
+
+    return `https://${BUCKET}.cos.${REGION}.myqcloud.com/${key}`;
+}
 
 export async function POST(req: Request) {
     try {
@@ -55,7 +67,7 @@ export async function POST(req: Request) {
             jumlahSummit,
             proofFileVip: bufferVip,
             proofFileSummit: bufferSummit,
-            ipAddress
+            ipAddress,
         });
 
         if (!parsed.success) {
@@ -70,9 +82,9 @@ export async function POST(req: Request) {
                 OR: [
                     { username: parsed.data.username },
                     { discordId: parsed.data.discordId },
-                    { ipAddress: parsed.data.ipAddress }
-                ]
-            }
+                    { ipAddress: parsed.data.ipAddress },
+                ],
+            },
         });
 
         if (existing) {
@@ -87,16 +99,27 @@ export async function POST(req: Request) {
             );
         }
 
+        // Upload file ke COS
+        const summitKey = `proofs/summit/${Date.now()}-${parsed.data.username}.png`;
+        const summitUrl = await uploadToCOS(parsed.data.proofFileSummit, summitKey);
+
+        let vipUrl: string | null = null;
+        if (parsed.data.proofFileVip) {
+            const vipKey = `proofs/vip/${Date.now()}-${parsed.data.username}.png`;
+            vipUrl = await uploadToCOS(parsed.data.proofFileVip, vipKey);
+        }
+
+        // Simpan ke database hanya URL
         const saved = await prisma.vipProof.create({
             data: {
                 username: parsed.data.username,
                 discordId: parsed.data.discordId,
                 isVip: parsed.data.isVip === 'Ya',
-                proofFileVip: parsed.data.proofFileVip ? Buffer.from(parsed.data.proofFileVip) : null,
-                proofFileSummit: Buffer.from(parsed.data.proofFileSummit),
+                proofURLVip: vipUrl,
+                proofURLSummit: summitUrl,
                 summitTotal: parsed.data.jumlahSummit,
-                ipAddress: parsed.data.ipAddress
-            }
+                ipAddress: parsed.data.ipAddress,
+            },
         });
 
         return NextResponse.json({ success: true, id: saved.id });
@@ -105,7 +128,7 @@ export async function POST(req: Request) {
             {
                 error: 'Terjadi kesalahan saat menyimpan data.',
                 details: error instanceof Error ? error.message : 'Unknown error',
-                stack: error instanceof Error ? error.stack : null
+                stack: error instanceof Error ? error.stack : null,
             },
             { status: 500 }
         );
