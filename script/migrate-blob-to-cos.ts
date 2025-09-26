@@ -2,13 +2,16 @@
 import { cos, BUCKET, REGION } from '@/lib/cos';
 import prisma from "@/lib/prisma";
 
-async function uploadToCOS(buffer: Buffer, key: string): Promise<string> {
+async function uploadToCOS(file: Uint8Array | Buffer, key: string): Promise<string> {
+    const body = Buffer.isBuffer(file) ? file : Buffer.from(file);
+
     await cos.putObject({
         Bucket: BUCKET,
         Region: REGION,
         Key: key,
-        Body: buffer,
+        Body: body,
     });
+
     return `https://${BUCKET}.cos.${REGION}.myqcloud.com/${key}`;
 }
 
@@ -20,7 +23,7 @@ async function migrateBatch() {
                 { proofURLSummit: null },
             ],
         },
-        take: 100, // migrasi per batch
+        take: 100,
     });
 
     console.log(`Migrating ${oldData.length} records...`);
