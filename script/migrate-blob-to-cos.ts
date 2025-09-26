@@ -1,59 +1,48 @@
 import { cos, BUCKET, REGION } from '@/lib/cos';
-import prisma from "@/lib/prisma";
+import prisma from '@/lib/prisma';
+
+function toBuffer(file: Uint8Array | Buffer): Buffer {
+    return Buffer.isBuffer(file) ? file : Buffer.from(file);
+}
 
 async function uploadToCOS(file: Uint8Array | Buffer, key: string): Promise<string> {
-    const body = Buffer.isBuffer(file) ? file : Buffer.from(file);
-
     await cos.putObject({
         Bucket: BUCKET,
         Region: REGION,
         Key: key,
-        Body: body,
+        Body: toBuffer(file),
     });
-
     return `https://${BUCKET}.cos.${REGION}.myqcloud.com/${key}`;
 }
 
-async function migrateOnce(batchSize = 100): Promise<number> {
-    // Ambil data yang URL-nya masih kosong
-    const oldData = await prisma.vipProof.findMany({
+async function migrateBatch(batchSize = 100): Promise<number> {
+    const items = await prisma.vipProof.findMany({
         where: {
             OR: [
-                { proofURLSummit: null },
-                { proofURLVip: null },
+                { proofFileSummit: { not: null } },
+                { proofFileVip: { not: null } },
             ],
         },
         take: batchSize,
+        orderBy: { id: 'asc' },
     });
 
-    if (oldData.length === 0) {
-        console.log('No more records to migrate.');
-        return 0;
-    }
+    if (items.length === 0) return 0;
 
-    console.log(`Migrating ${oldData.length} records...`);
+    for (const item of items) {
+        let summitUrl: string | null = item.proofURLSummit ?? null;
+        let vipUrl: string | null = item.proofURLVip ?? null;
 
-    for (const item of oldData) {
-        // Kalau summit kosong → log aja, skip record ini
-        if (!item.proofFileSummit) {
-            console.log(`⚠️ Skipping ID ${item.id}: proofFileSummit is NULL`);
-            continue;
+        if (item.proofFileSummit && !summitUrl) {
+            const summitKey = `proofs/summit/${item.id}-${Date.now()}.png`;
+            summitUrl = await uploadToCOS(item.proofFileSummit, summitKey);
         }
 
-        // Upload summit proof
-        const summitKey = `proofs/summit/${item.id}-${Date.now()}.png`;
-        const summitUrl = await uploadToCOS(item.proofFileSummit, summitKey);
-
-        // Upload VIP proof kalau ada
-        let vipUrl: string | null = null;
-        if (item.proofFileVip) {
+        if (item.proofFileVip && !vipUrl) {
             const vipKey = `proofs/vip/${item.id}-${Date.now()}.png`;
             vipUrl = await uploadToCOS(item.proofFileVip, vipKey);
         }
 
-        // Update record:
-        // 1. Simpan URL baru
-        // 2. Kosongkan kolom BLOB supaya database jadi ringan
         await prisma.vipProof.update({
             where: { id: item.id },
             data: {
@@ -63,27 +52,26 @@ async function migrateOnce(batchSize = 100): Promise<number> {
                 proofFileVip: null,
             },
         });
-
-        console.log(`✅ Migrated ID: ${item.id}`);
     }
 
-    return oldData.length;
+    return items.length;
 }
 
-async function migrateLoop() {
-    let migrated = 0;
-    let batch = 0;
-
+async function main(): Promise<void> {
+    let processed = 0;
     while (true) {
-        console.log(`\n--- Batch #${++batch} ---`);
-        const count = await migrateOnce(100); // proses per 100 data
-        if (count === 0) break;
-        migrated += count;
+        const n = await migrateBatch(100);
+        if (n === 0) break;
+        processed += n;
     }
-
-    console.log(`\n🎉 Migration complete! Total migrated: ${migrated}`);
+    console.log(`Migration done. Processed ${processed} records.`);
 }
 
-migrateLoop()
-    .catch((err) => console.error('❌ Error during migration:', err))
-    .finally(() => prisma.$disconnect());
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exitCode = 1;
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });
