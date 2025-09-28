@@ -25,7 +25,7 @@ export default function AdminUsersPage({ searchParams }: { searchParams: Promise
     else if (roleParam === UserRoleEnum.USER) role = UserRoleEnum.USER
 
     const limit = 10
-    const result = use(getUsers({ page, limit, search, role })) // ✅ tidak pakai async/await
+    const result = use(getUsers({ page, limit, search, role }))
 
     return (
         <main className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 px-4 py-10">
@@ -33,13 +33,23 @@ export default function AdminUsersPage({ searchParams }: { searchParams: Promise
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                     <h1 className="text-2xl font-extrabold text-purple-600 tracking-tight">User Management</h1>
 
-                    {/* ✅ Button redirect ke review-page */}
-                    <Link
-                        href="/admin/review-page"
-                        className="px-5 py-2 rounded-lg font-semibold text-white shadow-md bg-gradient-to-r from-green-400 to-blue-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition text-center"
-                    >
-                        Go to Review Page
-                    </Link>
+                    <div className="flex gap-3">
+                        {/* Button ke review-page */}
+                        <Link
+                            href="/admin/review-page"
+                            className="px-5 py-2 rounded-lg font-semibold text-white shadow-md bg-gradient-to-r from-green-400 to-blue-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition text-center"
+                        >
+                            Go to Review Page
+                        </Link>
+
+                        {/* Button ke public/dashboard */}
+                        <Link
+                            href="/public/dashboard"
+                            className="px-5 py-2 rounded-lg font-semibold text-white shadow-md bg-gradient-to-r from-indigo-400 to-purple-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition text-center"
+                        >
+                            Go to Public Dashboard
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Filter bar */}

@@ -45,6 +45,17 @@ export default async function VipProofDashboard({ searchParams }: DashboardProps
     return (
         <div className="min-h-screen bg-gradient-to-b from-indigo-100 via-white to-indigo-50 p-4 sm:p-8">
             <div className="max-w-6xl mx-auto">
+
+                {/* Back Button */}
+                <div className="mb-4">
+                    <Link
+                        href="/admin"
+                        className="inline-block px-5 py-2 rounded-full bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-all shadow-sm"
+                    >
+                        ⬅ Back to Admin
+                    </Link>
+                </div>
+
                 <h1 className="text-2xl sm:text-4xl font-extrabold text-indigo-700 mb-6 sm:mb-8 text-center tracking-tight">
                     VIP Proof Dashboard
                 </h1>
@@ -94,16 +105,20 @@ export default async function VipProofDashboard({ searchParams }: DashboardProps
                                     idx % 2 === 0 ? "bg-white/70" : "bg-indigo-50/30"
                                 }`}
                             >
-                                <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-800 font-medium">{proof.username}</td>
+                                <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-800 font-medium">
+                                    {proof.username}
+                                </td>
                                 <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-600">{proof.discordId}</td>
                                 <td className="px-4 sm:px-6 py-3 sm:py-4">
-                    <span
-                        className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
-                            proof.isVip ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-                        }`}
-                    >
-                      {proof.isVip ? "Yes" : "No"}
-                    </span>
+                                        <span
+                                            className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
+                                                proof.isVip
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-red-100 text-red-600"
+                                            }`}
+                                        >
+                                            {proof.isVip ? "Yes" : "No"}
+                                        </span>
                                 </td>
                                 <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-800">{proof.summitTotal}</td>
                                 <td className="px-4 sm:px-6 py-3 sm:py-4">
@@ -113,8 +128,8 @@ export default async function VipProofDashboard({ searchParams }: DashboardProps
                                                 <div key={admin.id} className="text-xs sm:text-sm">
                                                     <span className="font-medium">{admin.name}</span>
                                                     <span className="ml-1 text-gray-500 text-[10px] sm:text-xs">
-                              ({admin.roles.map(r => r.role.name).join(", ")})
-                            </span>
+                                                            ({admin.roles.map(r => r.role.name).join(", ")})
+                                                        </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -123,17 +138,17 @@ export default async function VipProofDashboard({ searchParams }: DashboardProps
                                     )}
                                 </td>
                                 <td className="px-4 sm:px-6 py-3 sm:py-4">
-                    <span
-                        className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
-                            proof.status === "APPROVED"
-                                ? "bg-green-100 text-green-700"
-                                : proof.status === "REJECTED"
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-yellow-100 text-yellow-700"
-                        }`}
-                    >
-                      {proof.status}
-                    </span>
+                                        <span
+                                            className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
+                                                proof.status === "APPROVED"
+                                                    ? "bg-green-100 text-green-700"
+                                                    : proof.status === "REJECTED"
+                                                        ? "bg-red-100 text-red-700"
+                                                        : "bg-yellow-100 text-yellow-700"
+                                            }`}
+                                        >
+                                            {proof.status}
+                                        </span>
                                 </td>
                                 <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
                                     {proof.status === "REJECTED" ? (

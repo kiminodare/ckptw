@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { getNextPendingProof, reviewProof } from '@/services/vipProof'
 import { resolveCurrentProofUrl } from '@/utils/proofHelpers'
 import { $Enums } from '@/app/generated/prisma'
@@ -12,6 +13,7 @@ export default function ReviewPage() {
     const [proof, setProof] = useState<VipProof | null>(null)
     const [loading, setLoading] = useState(true)
     const [zoomImage, setZoomImage] = useState<string | null>(null)
+    const router = useRouter()
 
     const loadProof = async () => {
         setLoading(true)
@@ -39,14 +41,20 @@ export default function ReviewPage() {
 
     if (!proof)
         return (
-            <div className="flex items-center justify-center h-screen text-2xl font-bold text-green-400">
-                No more proofs to review 🎉
+            <div className="flex flex-col items-center justify-center h-screen text-center space-y-6">
+                <p className="text-2xl font-bold text-green-400">
+                    No more proofs to review 🎉
+                </p>
+                <button
+                    onClick={() => router.push('/admin')}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
+                >
+                    ⬅ Back to Admin
+                </button>
             </div>
         )
 
     const latestAppeal = proof.appeals.length > 0 ? proof.appeals[0] : null
-
-    // Ambil image yang benar, fallback ke original kalau appeal kosong
     const vipImageUrl = resolveCurrentProofUrl(proof, 'VIP')
     const summitImageUrl = resolveCurrentProofUrl(proof, 'SUMMIT')
 
@@ -70,7 +78,6 @@ export default function ReviewPage() {
                     </p>
                 </div>
 
-                {/* Jika ada appeal, tampilkan alasan */}
                 {latestAppeal && (
                     <div className="mt-4 p-4 border rounded-lg bg-yellow-50 text-left">
                         <p className="text-sm text-gray-700">
@@ -82,7 +89,6 @@ export default function ReviewPage() {
                     </div>
                 )}
 
-                {/* VIP Image, hanya muncul jika ada URL */}
                 {vipImageUrl && (
                     <div className="mt-6">
                         <p className="font-semibold text-pink-600">
@@ -99,7 +105,6 @@ export default function ReviewPage() {
                     </div>
                 )}
 
-                {/* Summit Image, hanya muncul jika ada URL */}
                 {summitImageUrl && (
                     <div className="mt-6">
                         <p className="font-semibold text-blue-600">
@@ -132,7 +137,6 @@ export default function ReviewPage() {
                 </div>
             </div>
 
-            {/* Zoom Modal */}
             {zoomImage && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
