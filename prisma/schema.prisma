@@ -8,23 +8,150 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ProofStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum UserRoleEnum {
+  OWNER
+  ADMIN
+  USER
+}
+
 model VipProof {
   id        String  @id @default(cuid())
   username  String
   discordId String  @map("discord_id")
   isVip     Boolean @map("is_vip")
 
-  // Old Blob Columns (tetap ada)
   proofFileVip    Bytes? @map("proof_file_vip")
   proofFileSummit Bytes? @map("proof_file_summit")
 
-  // New URL Columns
   proofURLVip    String? @map("proof_url_vip")
   proofURLSummit String? @map("proof_url_summit")
 
-  summitTotal Int      @map("summit_total")
-  ipAddress   String   @map("ip_address")
-  createdAt   DateTime @default(now())
+  summitTotal Int    @map("summit_total")
+  ipAddress   String @map("ip_address")
+
+  status ProofStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  reviewedById String? @map("reviewed_by_id")
+  reviewedBy   User?   @relation("VipProofReviewedBy", fields: [reviewedById], references: [id])
+
+  assignedAdmins VipProofAssignment[]
 
   @@unique([ipAddress])
+}
+
+model VipProofAssignment {
+  id         String   @id @default(cuid())
+  vipProofId String
+  adminId    String
+  assignedAt DateTime @default(now())
+
+  vipProof VipProof @relation(fields: [vipProofId], references: [id], onDelete: Cascade)
+  admin    User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@unique([vipProofId, adminId]) // biar 1 admin nggak double assign ke proof yang sama
+  @@map("vip_proof_assignments")
+}
+
+model User {
+  id            String   @id
+  name          String
+  username      String?
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+  roles    UserRoles[]
+
+  assignedProofs VipProofAssignment[]
+
+  reviewedProofs VipProof[] @relation("VipProofReviewedBy")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+model Jwks {
+  id         String   @id
+  publicKey  String
+  privateKey String
+  createdAt  DateTime
+
+  @@map("jwks")
+}
+
+model Role {
+  id        String       @id @default(cuid())
+  name      UserRoleEnum @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+  userRoles UserRoles[]
+
+  @@map("role")
+}
+
+model UserRoles {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
 }

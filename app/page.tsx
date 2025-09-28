@@ -1,25 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+type FormDataType = {
+    username: string;
+    discordId: string;
+    isVip: string;
+    jumlahSummit: string;
+    proofVip: File | null;
+    proofSummit: File | null;
+};
 
 export default function App() {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormDataType>({
         username: '',
         discordId: '',
         isVip: '',
         jumlahSummit: '',
-        proofVip: null as File | null,
-        proofSummit: null as File | null
+        proofVip: null,
+        proofSummit: null
     });
 
-    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState<boolean>(false);
+    const [message, setMessage] = useState<string>('');
     const [fieldErrors, setFieldErrors] = useState<string[]>([]);
-    const [loading, setLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, files } = e.target as HTMLInputElement;
-        setFormData((prevData) => ({
-            ...prevData,
+        setFormData((prev) => ({
+            ...prev,
             [name]: files ? files[0] : value
         }));
     };
@@ -39,7 +48,6 @@ export default function App() {
         if (formData.isVip === 'Ya' && formData.proofVip) {
             body.append('proofVip', formData.proofVip);
         }
-
         if (formData.proofSummit) {
             body.append('proofSummit', formData.proofSummit);
         }
@@ -73,20 +81,39 @@ export default function App() {
         }
     };
 
+
+    if (process.env.NEXT_PUBLIC_FORM_CLOSED === 'true') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 flex flex-col items-center justify-center text-center px-6">
+                <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md">
+                    <h1 className="text-3xl font-bold text-gray-800 mb-4">
+                        Formulir Ditutup ❌
+                    </h1>
+                    <p className="text-gray-600">
+                        Pendaftaran sudah ditutup. Stay tuned untuk info berikutnya!
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl">
-                <h1 className="text-2xl font-bold text-center text-black mb-6">
-                    Formulir Pendaftaran VIP
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+            <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-3xl">
+                <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-6 tracking-tight">
+                    Daftar VIP Summit
                 </h1>
+                <p className="text-center text-gray-500 mb-8">
+                    Isi form ini untuk pendaftaran VIP. Pastikan semua data benar ya!
+                </p>
 
                 {message && (
                     <div
                         className={`${
                             message.startsWith('Gagal') || message.startsWith('Data tidak valid')
-                                ? 'bg-red-100 border-red-500 text-red-700'
-                                : 'bg-green-100 border-green-500 text-green-700'
-                        } border-l-4 p-4 rounded-lg mb-4`}
+                                ? 'bg-red-100 border-red-400 text-red-700'
+                                : 'bg-green-100 border-green-400 text-green-700'
+                        } border-l-4 p-4 rounded-lg mb-4 transition-all duration-300`}
                         role="alert"
                     >
                         <p className="font-medium">{message}</p>
@@ -100,9 +127,13 @@ export default function App() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
+                <form
+                    onSubmit={handleSubmit}
+                    className="space-y-6"
+                    encType="multipart/form-data"
+                >
                     <div>
-                        <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="username" className="block text-sm font-semibold text-gray-700">
                             Username Roblox
                         </label>
                         <input
@@ -111,15 +142,15 @@ export default function App() {
                             id="username"
                             value={formData.username}
                             onChange={handleChange}
-                            className="mt-1 text-black block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                            placeholder="Masukkan username Roblox Anda"
+                            className="mt-2 text-gray-900 block w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            placeholder="Masukkan username Roblox kamu"
                             required
                             disabled={loading}
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="discordId" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="discordId" className="block text-sm font-semibold text-gray-700">
                             Discord ID
                         </label>
                         <input
@@ -128,23 +159,23 @@ export default function App() {
                             id="discordId"
                             value={formData.discordId}
                             onChange={handleChange}
-                            className="mt-1 block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                            placeholder="Masukkan Discord ID Anda"
+                            className="mt-2 block text-gray-900 w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            placeholder="Masukkan Discord ID kamu"
                             required
                             disabled={loading}
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="isVip" className="block text-sm font-medium text-gray-700">
-                            Apakah kamu menjadi VIP melalui gamepass?
+                        <label htmlFor="isVip" className="block text-sm font-semibold text-gray-700">
+                            Apakah kamu VIP melalui gamepass?
                         </label>
                         <select
                             name="isVip"
                             id="isVip"
                             value={formData.isVip}
                             onChange={handleChange}
-                            className="mt-1 block text-black w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-2 block text-gray-900 w-full px-4 py-3 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                             required
                             disabled={loading}
                         >
@@ -157,7 +188,7 @@ export default function App() {
                     </div>
 
                     <div>
-                        <label htmlFor="jumlahSummit" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="jumlahSummit" className="block text-sm font-semibold text-gray-700">
                             Jumlah Summit yang Diselesaikan
                         </label>
                         <input
@@ -166,7 +197,7 @@ export default function App() {
                             id="jumlahSummit"
                             value={formData.jumlahSummit}
                             onChange={handleChange}
-                            className="mt-1 block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-2 block text-gray-900 w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                             placeholder="Masukkan jumlah summit"
                             min={0}
                             required
@@ -174,31 +205,33 @@ export default function App() {
                         />
                     </div>
 
-                    <div>
-                        <label htmlFor="proofVip" className="block text-sm font-medium text-gray-700">
-                            Upload Bukti Kamu Saat VIP di Map Lama
-                        </label>
-                        <input
-                            type="file"
-                            name="proofVip"
-                            id="proofVip"
-                            onChange={handleChange}
-                            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                            required={formData.isVip === 'Ya'}
-                            disabled={loading}
-                        />
-                    </div>
+                    {formData.isVip === 'Ya' && (
+                        <div>
+                            <label htmlFor="proofVip" className="block text-sm font-semibold text-gray-700">
+                                Upload Bukti VIP di Map Lama
+                            </label>
+                            <input
+                                type="file"
+                                name="proofVip"
+                                id="proofVip"
+                                onChange={handleChange}
+                                className="mt-2 block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 transition-colors duration-200"
+                                required
+                                disabled={loading}
+                            />
+                        </div>
+                    )}
 
                     <div>
-                        <label htmlFor="proofSummit" className="block text-sm font-medium text-gray-700">
-                            Upload Bukti Kamu Saat Menyelesaikan Summit Gunung
+                        <label htmlFor="proofSummit" className="block text-sm font-semibold text-gray-700">
+                            Upload Bukti Penyelesaian Summit
                         </label>
                         <input
                             type="file"
                             name="proofSummit"
                             id="proofSummit"
                             onChange={handleChange}
-                            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            className="mt-2 block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 transition-colors duration-200"
                             required
                             disabled={loading}
                         />
@@ -206,12 +239,14 @@ export default function App() {
 
                     <button
                         type="submit"
-                        className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                        className={`w-full flex justify-center py-3 px-4 rounded-xl shadow-md text-sm font-semibold text-white transition-all duration-300 ${
+                            loading
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700 active:scale-95'
                         }`}
                         disabled={loading}
                     >
-                        {loading ? 'Loading...' : 'Kirim'}
+                        {loading ? 'Mengirim...' : 'Kirim'}
                     </button>
                 </form>
             </div>
