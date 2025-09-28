@@ -26,9 +26,6 @@ model VipProof {
   discordId String  @map("discord_id")
   isVip     Boolean @map("is_vip")
 
-  proofFileVip    Bytes? @map("proof_file_vip")
-  proofFileSummit Bytes? @map("proof_file_summit")
-
   proofURLVip    String? @map("proof_url_vip")
   proofURLSummit String? @map("proof_url_summit")
 
@@ -44,6 +41,7 @@ model VipProof {
   reviewedBy   User?   @relation("VipProofReviewedBy", fields: [reviewedById], references: [id])
 
   assignedAdmins VipProofAssignment[]
+  appeals        VipProofAppeal[]
 
   @@unique([ipAddress])
 }
@@ -57,8 +55,23 @@ model VipProofAssignment {
   vipProof VipProof @relation(fields: [vipProofId], references: [id], onDelete: Cascade)
   admin    User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
-  @@unique([vipProofId, adminId]) // biar 1 admin nggak double assign ke proof yang sama
+  @@unique([vipProofId, adminId])
   @@map("vip_proof_assignments")
+}
+
+model VipProofAppeal {
+  id                String   @id @default(cuid())
+  vipProofId        String
+  userId            String
+  reason            String
+  newProofVipURL    String?  @map("new_proof_vip_url")
+  newProofSummitURL String?  @map("new_proof_summit_url")
+  createdAt         DateTime @default(now())
+
+  vipProof VipProof @relation(fields: [vipProofId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("vip_proof_appeals")
 }
 
 model User {
@@ -77,7 +90,8 @@ model User {
 
   assignedProofs VipProofAssignment[]
 
-  reviewedProofs VipProof[] @relation("VipProofReviewedBy")
+  reviewedProofs VipProof[]       @relation("VipProofReviewedBy")
+  appeals        VipProofAppeal[]
 
   @@map("user")
 }

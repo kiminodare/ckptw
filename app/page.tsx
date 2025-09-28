@@ -1,17 +1,20 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type FormDataType = {
-    username: string;
-    discordId: string;
-    isVip: string;
-    jumlahSummit: string;
-    proofVip: File | null;
-    proofSummit: File | null;
-};
+    username: string
+    discordId: string
+    isVip: string
+    jumlahSummit: string
+    proofVip: File | null
+    proofSummit: File | null
+}
 
 export default function App() {
+    const router = useRouter()
+
     const [formData, setFormData] = useState<FormDataType>({
         username: '',
         discordId: '',
@@ -19,68 +22,67 @@ export default function App() {
         jumlahSummit: '',
         proofVip: null,
         proofSummit: null
-    });
+    })
 
-    const [loading, setLoading] = useState<boolean>(false);
-    const [message, setMessage] = useState<string>('');
-    const [fieldErrors, setFieldErrors] = useState<string[]>([]);
+    const [loading, setLoading] = useState<boolean>(false)
+    const [message, setMessage] = useState<string>('')
+    const [fieldErrors, setFieldErrors] = useState<string[]>([])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value, files } = e.target as HTMLInputElement;
-        setFormData((prev) => ({
+        const { name, value, files } = e.target as HTMLInputElement
+        setFormData(prev => ({
             ...prev,
             [name]: files ? files[0] : value
-        }));
-    };
+        }))
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setLoading(true);
-        setMessage('');
-        setFieldErrors([]);
+        e.preventDefault()
+        setLoading(true)
+        setMessage('')
+        setFieldErrors([])
 
-        const body = new FormData();
-        body.append('username', formData.username);
-        body.append('discordId', formData.discordId);
-        body.append('isVip', formData.isVip);
-        body.append('jumlahSummit', formData.jumlahSummit);
+        const body = new FormData()
+        body.append('username', formData.username)
+        body.append('discordId', formData.discordId)
+        body.append('isVip', formData.isVip)
+        body.append('jumlahSummit', formData.jumlahSummit)
 
         if (formData.isVip === 'Ya' && formData.proofVip) {
-            body.append('proofVip', formData.proofVip);
+            body.append('proofVip', formData.proofVip)
         }
         if (formData.proofSummit) {
-            body.append('proofSummit', formData.proofSummit);
+            body.append('proofSummit', formData.proofSummit)
         }
 
         try {
             const res = await fetch('/api/vip/submit', {
                 method: 'POST',
                 body
-            });
+            })
 
-            const data = await res.json();
+            const data = await res.json()
 
             if (res.status === 500) {
-                setMessage(`${data.error} (${data.details})`);
-                return;
+                setMessage(`${data.error} (${data.details})`)
+                return
             }
 
             if (data.success) {
-                setMessage('Formulir berhasil dikirim!');
-                setFieldErrors([]);
+                setMessage('Formulir berhasil dikirim!')
+                setFieldErrors([])
             } else {
-                setMessage(data.error || 'Terjadi kesalahan');
+                setMessage(data.error || 'Terjadi kesalahan')
                 if (data.issues) {
-                    setFieldErrors(data.issues.map((issue: { message: string }) => issue.message));
+                    setFieldErrors(data.issues.map((issue: { message: string }) => issue.message))
                 }
             }
         } catch {
-            setMessage('Terjadi kesalahan jaringan, coba lagi nanti.');
+            setMessage('Terjadi kesalahan jaringan, coba lagi nanti.')
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
-
+    }
 
     if (process.env.NEXT_PUBLIC_FORM_CLOSED === 'true') {
         return (
@@ -89,12 +91,18 @@ export default function App() {
                     <h1 className="text-3xl font-bold text-gray-800 mb-4">
                         Formulir Ditutup ❌
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 mb-6">
                         Pendaftaran sudah ditutup. Stay tuned untuk info berikutnya!
                     </p>
+                    <button
+                        onClick={() => router.push('/public/dashboard')}
+                        className="w-full px-6 py-3 rounded-xl bg-purple-600 text-white font-semibold shadow-md hover:bg-purple-700 active:scale-95 transition-all"
+                    >
+                        Lihat Dashboard
+                    </button>
                 </div>
             </div>
-        );
+        )
     }
 
     return (
@@ -127,11 +135,7 @@ export default function App() {
                     </div>
                 )}
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="space-y-6"
-                    encType="multipart/form-data"
-                >
+                <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
                     <div>
                         <label htmlFor="username" className="block text-sm font-semibold text-gray-700">
                             Username Roblox
@@ -251,5 +255,5 @@ export default function App() {
                 </form>
             </div>
         </div>
-    );
+    )
 }

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { getNextPendingProof, reviewProof } from '@/services/vipProof'
+import { resolveCurrentProofUrl } from '@/utils/proofHelpers'
 import { $Enums } from '@/app/generated/prisma'
 import ProofStatus = $Enums.ProofStatus
 
-type VipProof = Awaited<ReturnType<typeof getNextPendingProof>>
+type VipProof = NonNullable<Awaited<ReturnType<typeof getNextPendingProof>>>
 
 export default function ReviewPage() {
     const [proof, setProof] = useState<VipProof | null>(null)
@@ -43,10 +44,18 @@ export default function ReviewPage() {
             </div>
         )
 
+    const latestAppeal = proof.appeals.length > 0 ? proof.appeals[0] : null
+
+    // Ambil image yang benar, fallback ke original kalau appeal kosong
+    const vipImageUrl = resolveCurrentProofUrl(proof, 'VIP')
+    const summitImageUrl = resolveCurrentProofUrl(proof, 'SUMMIT')
+
     return (
         <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 px-4">
             <div className="bg-white/80 backdrop-blur-xl border border-white/40 rounded-2xl shadow-2xl p-6 w-full max-w-md text-center transition-all duration-300 hover:scale-[1.02]">
-                <h2 className="text-2xl font-extrabold text-purple-600 tracking-tight">Roblox Username</h2>
+                <h2 className="text-2xl font-extrabold text-purple-600 tracking-tight">
+                    Roblox Username
+                </h2>
                 <p className="text-lg font-semibold text-gray-700 mt-1">{proof.username}</p>
 
                 <div className="mt-4 space-y-1 text-sm">
@@ -61,29 +70,47 @@ export default function ReviewPage() {
                     </p>
                 </div>
 
-                {proof.proofURLVip && (
+                {/* Jika ada appeal, tampilkan alasan */}
+                {latestAppeal && (
+                    <div className="mt-4 p-4 border rounded-lg bg-yellow-50 text-left">
+                        <p className="text-sm text-gray-700">
+                            <span className="font-semibold text-yellow-700">Appeal Reason:</span> {latestAppeal.reason}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Submitted on {new Date(latestAppeal.createdAt).toLocaleString()}
+                        </p>
+                    </div>
+                )}
+
+                {/* VIP Image, hanya muncul jika ada URL */}
+                {vipImageUrl && (
                     <div className="mt-6">
-                        <p className="font-semibold text-pink-600">VIP Proof</p>
+                        <p className="font-semibold text-pink-600">
+                            VIP Proof {latestAppeal?.newProofVipURL && '(Appeal)'}
+                        </p>
                         <div className="mt-2 flex justify-center">
                             <img
-                                src={proof.proofURLVip}
+                                src={vipImageUrl}
                                 alt="VIP Proof"
                                 className="rounded-xl border border-gray-200 shadow-md cursor-zoom-in transition-transform duration-300 hover:scale-105 max-w-[300px] max-h-[300px] object-contain w-full h-auto"
-                                onClick={() => setZoomImage(proof.proofURLVip)}
+                                onClick={() => setZoomImage(vipImageUrl)}
                             />
                         </div>
                     </div>
                 )}
 
-                {proof.proofURLSummit && (
+                {/* Summit Image, hanya muncul jika ada URL */}
+                {summitImageUrl && (
                     <div className="mt-6">
-                        <p className="font-semibold text-blue-600">Summit Proof</p>
+                        <p className="font-semibold text-blue-600">
+                            Summit Proof {latestAppeal?.newProofSummitURL && '(Appeal)'}
+                        </p>
                         <div className="mt-2 flex justify-center">
                             <img
-                                src={proof.proofURLSummit}
+                                src={summitImageUrl}
                                 alt="Summit Proof"
                                 className="rounded-xl border border-gray-200 shadow-md cursor-zoom-in transition-transform duration-300 hover:scale-105 max-w-[300px] max-h-[300px] object-contain w-full h-auto"
-                                onClick={() => setZoomImage(proof.proofURLSummit)}
+                                onClick={() => setZoomImage(summitImageUrl)}
                             />
                         </div>
                     </div>
@@ -105,6 +132,7 @@ export default function ReviewPage() {
                 </div>
             </div>
 
+            {/* Zoom Modal */}
             {zoomImage && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"

@@ -3,8 +3,23 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "@/lib/prisma";
 import {customSession, jwt} from "better-auth/plugins";
 import {ADMIN_USERNAMES} from "@/constants/admin";
-import {User} from "@/app/generated/prisma";
+import {User, UserRoleEnum} from "@/app/generated/prisma";
 
+async function ensureDefaultRole(userId: string): Promise<UserRoleEnum[]> {
+    const current = await prisma.userRoles.findMany({
+        where: { userId },
+        include: { role: true },
+    });
+    if (current.length > 0) {
+        return current.map((ur) => ur.role.name as UserRoleEnum);
+    }
+    const userRole = await prisma.role.findUnique({ where: { name: UserRoleEnum.USER } });
+    if (!userRole) {
+        throw new Error("Missing USER role");
+    }
+    await prisma.userRoles.create({ data: { userId, roleId: userRole.id } });
+    return [UserRoleEnum.USER];
+}
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -100,6 +115,7 @@ export const auth = betterAuth({
             },
         },
     },
+
     events:{
         async afterUserCreated(user: User) {
             const adminRole = await prisma.role.findUnique({ where: { name: "ADMIN" } })
@@ -117,6 +133,15 @@ export const auth = betterAuth({
         },
     },
     trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"],
+    databaseHooks: {
+        user: {
+            create: {
+                after: async (created) => {
+                    await ensureDefaultRole(created.id);
+                },
+            },
+        },
+    },
     plugins: [
         jwt({
             jwt: {
@@ -151,4 +176,5 @@ export const auth = betterAuth({
             }
         })
     ],
+
 });

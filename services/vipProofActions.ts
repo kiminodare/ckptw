@@ -37,11 +37,25 @@ export async function getVipProofs(params: GetVipProofsParams) {
     const [data, total] = await Promise.all([
         prisma.vipProof.findMany({
             where,
-            orderBy: {
-                createdAt: "desc",
-            },
+            orderBy: { createdAt: "desc" },
             skip,
             take: limit,
+            include: {
+                assignedAdmins: {
+                    include: {
+                        admin: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                roles: {
+                                    include: { role: true },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         }),
         prisma.vipProof.count({ where }),
     ]);

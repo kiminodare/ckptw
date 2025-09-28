@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
 export async function middleware(request: NextRequest) {
-    // Ambil session lengkap termasuk roles
     const session = await auth.api.getSession({
         headers: await headers(),
     });
@@ -13,19 +12,23 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    const allowedRoles = ["ADMIN", "OWNER"];
-    const hasAccess = session.user.roles.some((role) =>
-        allowedRoles.includes(role)
-    );
+    const pathname = request.nextUrl.pathname;
 
-    if (!hasAccess) {
-        return NextResponse.redirect(new URL("/403", request.url));
+    // If path starts with /admin → Only allow ADMIN and OWNER
+    if (pathname.startsWith("/admin")) {
+        const allowedRoles = ["ADMIN", "OWNER"];
+        const hasAccess = session.user.roles.some(role => allowedRoles.includes(role));
+
+        if (!hasAccess) {
+            return NextResponse.redirect(new URL("/403", request.url));
+        }
     }
 
+    // If path starts with /public → everyone logged-in is allowed
     return NextResponse.next();
 }
 
 export const config = {
     runtime: "nodejs",
-    matcher: ["/public/:path*","/admin/:path*"],
+    matcher: ["/public/:path*", "/admin/:path*"],
 };
