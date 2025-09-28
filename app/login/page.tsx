@@ -1,9 +1,11 @@
 "use client"
 
 import { signIn, signOut, useSession } from "@/lib/auth-client"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
     const { data: session, isPending, error } = useSession()
+    const router = useRouter()
 
     if (isPending) {
         return (
@@ -60,12 +62,26 @@ export default function LoginPage() {
             <p className="text-gray-600 mb-8">
                 You&#39;re logged in and ready to roll.
             </p>
-            <button
-                onClick={() => signOut()}
-                className="px-6 py-3 rounded-full bg-gray-800 text-white font-medium shadow-md hover:bg-gray-900 active:scale-95 transition-all"
-            >
-                Logout
-            </button>
+            <div className="flex gap-4">
+                <button
+                    onClick={() => router.push("/admin")}
+                    className="px-6 py-3 rounded-full bg-indigo-600 text-white font-medium shadow-md hover:bg-indigo-700 active:scale-95 transition-all"
+                >
+                    Go to Admin
+                </button>
+                <button
+                    onClick={() => router.push("/public/dashboard")}
+                    className="px-6 py-3 rounded-full bg-blue-600 text-white font-medium shadow-md hover:bg-blue-700 active:scale-95 transition-all"
+                >
+                    Go to Dashboard
+                </button>
+                <button
+                    onClick={() => signOut()}
+                    className="px-6 py-3 rounded-full bg-gray-800 text-white font-medium shadow-md hover:bg-gray-900 active:scale-95 transition-all"
+                >
+                    Logout
+                </button>
+            </div>
         </div>
     )
 }

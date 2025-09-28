@@ -87,19 +87,27 @@ export default function App() {
     if (process.env.NEXT_PUBLIC_FORM_CLOSED === 'true') {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 flex flex-col items-center justify-center text-center px-6">
-                <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md">
+                <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full">
                     <h1 className="text-3xl font-bold text-gray-800 mb-4">
                         Formulir Ditutup ❌
                     </h1>
                     <p className="text-gray-600 mb-6">
-                        Pendaftaran sudah ditutup. Stay tuned untuk info berikutnya!
+                        Pendaftaran sudah ditutup. Kamu tetap bisa login atau cek dashboard.
                     </p>
-                    <button
-                        onClick={() => router.push('/public/dashboard')}
-                        className="w-full px-6 py-3 rounded-xl bg-purple-600 text-white font-semibold shadow-md hover:bg-purple-700 active:scale-95 transition-all"
-                    >
-                        Lihat Dashboard
-                    </button>
+                    <div className="flex flex-col gap-4">
+                        <button
+                            onClick={() => router.push('/public/dashboard')}
+                            className="w-full px-6 py-3 rounded-xl bg-purple-600 text-white font-semibold shadow-md hover:bg-purple-700 active:scale-95 transition-all"
+                        >
+                            Lihat Dashboard
+                        </button>
+                        <button
+                            onClick={() => router.push('/login')}
+                            className="w-full px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700 active:scale-95 transition-all"
+                        >
+                            Login
+                        </button>
+                    </div>
                 </div>
             </div>
         )
