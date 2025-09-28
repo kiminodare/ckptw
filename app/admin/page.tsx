@@ -35,7 +35,7 @@ export default function AdminUsersPage({ searchParams }: { searchParams: Promise
 
                     {/* ✅ Button redirect ke review-page */}
                     <Link
-                        href="http://localhost:3000/admin/review-page"
+                        href="/admin/review-page"
                         className="px-5 py-2 rounded-lg font-semibold text-white shadow-md bg-gradient-to-r from-green-400 to-blue-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition text-center"
                     >
                         Go to Review Page
