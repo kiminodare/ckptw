@@ -1,11 +1,16 @@
 import Link from "next/link"
 import { getVipProofs } from "@/services/vipProofActions"
-import { VipProof as VipProofModel } from "@/app/generated/prisma"
+import { ProofStatus } from "@/app/generated/prisma"
 import { AppealModal } from "@/components/AppealModal"
 import { DiscordMismatchModal } from "@/components/DiscordMismatchModal"
-import { EditButton } from "@/components/buttons/EditButton"
 
-type VipProof = VipProofModel & {
+interface VipProof {
+    id: string
+    username: string
+    discordId: string
+    isVip: boolean
+    summitTotal: number
+    status: ProofStatus
     assignedAdmins: {
         admin: {
             id: string
@@ -90,7 +95,6 @@ export default async function VipProofDashboard({ searchParams }: DashboardProps
                             <th className="px-4 sm:px-6 py-3 sm:py-4 text-left font-semibold">Assigned To</th>
                             <th className="px-4 sm:px-6 py-3 sm:py-4 text-left font-semibold">Status</th>
                             <th className="px-4 sm:px-6 py-3 sm:py-4 text-center font-semibold">Actions</th>
-                            <th className="px-4 sm:px-6 py-3 sm:py-4 text-center font-semibold">Edit</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -152,9 +156,6 @@ export default async function VipProofDashboard({ searchParams }: DashboardProps
                                     ) : (
                                         <span className="text-gray-400 text-sm">-</span>
                                     )}
-                                </td>
-                                <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
-                                    <EditButton proof={proof} />
                                 </td>
                             </tr>
                         ))}
