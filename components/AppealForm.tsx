@@ -60,9 +60,11 @@ export function AppealForm({
             alert('Appeal submitted successfully!')
             onSubmitted()
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Something went wrong')
-        } finally {
-            setLoading(false)
+            if (err instanceof Error) {
+                setError(err instanceof Error ? err.stack ?? err.message : 'Unknown error')
+            } else {
+                setError('Something went wrong')
+            }
         }
     }
 
