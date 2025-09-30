@@ -5,13 +5,14 @@ const prisma = new PrismaClient();
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await req.json();
+    const { id } = await context.params;
 
     const updated = await prisma.vipProof.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         username: body.username,
         discordId: body.discordId,
@@ -26,7 +27,7 @@ export async function PUT(
     return NextResponse.json(updated, { status: 200 });
   } catch (error: unknown) {
     return new NextResponse(
-      error instanceof Error ? error.message : "Failed to fetch proofs",
+      error instanceof Error ? error.message : "Failed to update VipProof",
       { status: 500 }
     );
   }
