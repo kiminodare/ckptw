@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    // Configuration options go here
+    api: {
+        bodyParser: {
+            sizeLimit: '100mb'
+        }
+    }
 };
 
 export default nextConfig;
