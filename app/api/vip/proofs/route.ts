@@ -10,8 +10,8 @@ export async function GET(request: Request) {
 
     const result = await getVipProofs({ page, limit, search });
     return NextResponse.json(result, { status: 200 });
-  } catch (error: any) {
-    return new NextResponse(error?.message || "Failed to fetch proofs", { status: 500 });
+  } catch (error: unknown) {
+    return new NextResponse(error instanceof Error ? error.message : "Failed to fetch proofs", { status: 500 });
   }
 }
 
