@@ -3,8 +3,11 @@ FROM oven/bun:1 AS base
 
 WORKDIR /app
 
-# Install OpenSSL agar Prisma bisa berjalan
-RUN apt-get update -y && apt-get install -y openssl
+# Install OpenSSL + CA certificates biar SSL trusted
+RUN apt-get update -y \
+  && apt-get install -y openssl ca-certificates curl \
+  && update-ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 # Salin file dependency
 COPY bun.lock package.json ./
@@ -24,4 +27,3 @@ RUN bun run build
 EXPOSE 3000
 
 CMD ["bun", "run", "start"]
-
