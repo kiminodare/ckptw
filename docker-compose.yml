@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:15
+    container_name: roblox_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: roblox_user
+      POSTGRES_PASSWORD: roblox_pass
+      POSTGRES_DB: roblox_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - roblox_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: roblox_nextjs
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://roblox_user:roblox_pass@db:5432/roblox_db
+      NODE_ENV: production
+    ports:
+      - "3001:3000"
+    depends_on:
+      - db
+    command: >
+            sh -c "bunx prisma migrate deploy && bun run start"
+
+
+volumes:
+  roblox_data:
