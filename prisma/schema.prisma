@@ -169,3 +169,14 @@ model UserRoles {
   @@unique([userId, roleId])
   @@map("user_roles")
 }
+
+model MigrationLog {
+  id         Int      @id @default(autoincrement())
+  username   String
+  userId     String?
+  summit     Int
+  checkpoint Int      @default(0)
+  status     String // migrated, skipped, failed
+  message    String?
+  createdAt  DateTime @default(now())
+}
